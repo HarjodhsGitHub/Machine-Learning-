@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ Transition Recommender</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: #aaa;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(102, 126, 234, 0.5);
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(102, 126, 234, 0.5);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-area.dragover {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #aaa;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .track-list {
+            margin-top: 25px;
+        }
+
+        .track-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .track-item:hover {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .track-meta {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .track-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: auto;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-delete {
+            background: rgba(255, 74, 74, 0.8);
+        }
+
+        .recommendations {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .recommendation-item {
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .rec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .rec-title {
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .rec-artist {
+            color: #aaa;
+            font-size: 0.95em;
+        }
+
+        .score-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .score-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .score-label {
+            color: #aaa;
+            font-size: 0.85em;
+        }
+
+        .score-value {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .explanation {
+            color: #ddd;
+            font-size: 0.95em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .mix-strategy {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.9em;
+        }
+
+        .strategy-item {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .strategy-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            color: #4caf50;
+        }
+
+        .alert-error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            color: #f44336;
+        }
+
+        .alert-info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid rgba(33, 150, 243, 0.5);
+            color: #2196f3;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .score-breakdown {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 DJ Transition Recommender</h1>
+            <p class="subtitle">AI-powered mixing assistant with harmonic and embedding-based recommendations</p>
+        </header>
+
+        <div id="alerts"></div>
+
+        <div class="main-grid">
+            <!-- Upload Section -->
+            <div class="card">
+                <h2>📤 Upload Track</h2>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <p>Drop audio file here or click to select</p>
+                    <p style="font-size: 0.9em; color: #aaa; margin-top: 10px;">Supports: MP3, WAV, FLAC, OGG</p>
+                </div>
+
+                <input type="file" id="fileInput" accept=".mp3,.wav,.flac,.ogg">
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Track Title</label>
+                    <input type="text" id="trackTitle" placeholder="e.g., Midnight Groove">
+                </div>
+
+                <div class="form-group">
+                    <label>Artist Name</label>
+                    <input type="text" id="trackArtist" placeholder="e.g., DJ Phoenix">
+                </div>
+
+                <button id="uploadBtn" onclick="uploadTrack()">Upload & Analyze</button>
+
+                <div id="uploadStatus"></div>
+            </div>
+
+            <!-- Library Section -->
+            <div class="card">
+                <h2>🎛️ Your Library</h2>
+                <div id="trackList" class="track-list"></div>
+                <div id="libraryStats" class="stats"></div>
+            </div>
+        </div>
+
+        <!-- Recommendations Section -->
+        <div id="recommendationsContainer" style="display: none;">
+            <div class="recommendations" id="recommendations"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let currentTrack = null;
+
+        // ==================== Utility Functions ====================
+
+        function showAlert(message, type = 'info') {
+            const alertsDiv = document.getElementById('alerts');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertsDiv.appendChild(alertDiv);
+
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        function formatDuration(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ==================== Upload Handlers ====================
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                uploadTrack();
+            }
+        });
+
+        async function uploadTrack() {
+            const file = fileInput.files[0];
+            if (!file) {
+                showAlert('Please select a file', 'error');
+                return;
+            }
+
+            const title = document.getElementById('trackTitle').value || file.name;
+            const artist = document.getElementById('trackArtist').value || 'Unknown';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('title', title);
+            formData.append('artist', artist);
+
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Uploading and analyzing...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Upload failed');
+
+                const data = await response.json();
+
+                showAlert(`✓ Track uploaded: ${data.track_id}`, 'success');
+
+                // Clear form
+                fileInput.value = '';
+                document.getElementById('trackTitle').value = '';
+                document.getElementById('trackArtist').value = '';
+
+                statusDiv.innerHTML = '';
+
+                // Refresh library
+                await loadLibrary();
+
+            } catch (error) {
+                showAlert(`Error uploading track: ${error.message}`, 'error');
+                statusDiv.innerHTML = '';
+            }
+        }
+
+        // ==================== Library Management ====================
+
+        async function loadLibrary() {
+            try {
+                const response = await fetch(`${API_BASE}/tracks`);
+                const data = await response.json();
+
+                const trackList = document.getElementById('trackList');
+                trackList.innerHTML = '';
+
+                if (data.tracks.length === 0) {
+                    trackList.innerHTML = '<p style="color: #aaa; text-align: center;">No tracks yet. Upload one to get started!</p>';
+                } else {
+                    data.tracks.forEach(track => {
+                        const trackDiv = document.createElement('div');
+                        trackDiv.className = 'track-item';
+                        trackDiv.innerHTML = `
+                            <div class="track-info" onclick="selectTrack('${track.id}', '${track.title}', '${track.artist}', ${track.bpm}, '${track.key}')">
+                                <div class="track-title">${track.title}</div>
+                                <div class="track-meta">${track.artist} • ${track.key} • ${track.bpm.toFixed(1)} BPM • ${formatDuration(track.duration)}</div>
+                            </div>
+                            <div class="track-actions">
+                                <button class="btn-small" onclick="getRecommendations('${track.id}', event)">Recommend</button>
+                                <button class="btn-small btn-delete" onclick="deleteTrack('${track.id}', event)">Delete</button>
+                            </div>
+                        `;
+                        trackList.appendChild(trackDiv);
+                    });
+                }
+
+                // Update stats
+                const statsResponse = await fetch(`${API_BASE}/stats`);
+                const stats = await statsResponse.json();
+
+                document.getElementById('libraryStats').innerHTML = `
+                    <div class="stat-box">
+                        <div class="stat-value">${stats.total_tracks}</div>
+                        <div class="stat-label">Total Tracks</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">${stats.index_stats.ntotal || 0}</div>
+                        <div class="stat-label">Indexed</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">${stats.embedding_model}</div>
+                        <div class="stat-label">Model</div>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error loading library:', error);
+            }
+        }
+
+        async function deleteTrack(trackId, event) {
+            event.stopPropagation();
+
+            if (!confirm('Delete this track?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/track/${trackId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Delete failed');
+
+                showAlert('Track deleted', 'success');
+                await loadLibrary();
+
+            } catch (error) {
+                showAlert(`Error deleting track: ${error.message}`, 'error');
+            }
+        }
+
+        function selectTrack(id, title, artist, bpm, key) {
+            currentTrack = { id, title, artist, bpm, key };
+            showAlert(`Selected: ${title} by ${artist}`, 'info');
+        }
+
+        // ==================== Recommendations ====================
+
+        async function getRecommendations(trackId, event) {
+            if (event) event.stopPropagation();
+
+            const recContainer = document.getElementById('recommendationsContainer');
+            const recDiv = document.getElementById('recommendations');
+
+            recDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Generating recommendations...</div>';
+            recContainer.style.display = 'block';
+
+            try {
+                const response = await fetch(`${API_BASE}/recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ track_id: trackId, top_k: 10, min_score: 0.4 })
+                });
+
+                if (!response.ok) throw new Error('Failed to get recommendations');
+
+                const data = await response.json();
+
+                recDiv.innerHTML = `<h2>✨ Transitions for: ${data.current_track.title}</h2>`;
+
+                if (data.recommendations.length === 0) {
+                    recDiv.innerHTML += '<p style="color: #aaa; text-align: center; margin-top: 20px;">No recommendations available. Upload more tracks to get suggestions.</p>';
+                } else {
+                    data.recommendations.forEach((rec, index) => {
+                        const track = rec.track;
+                        const scores = rec.scores;
+
+                        let difficultyColor = '#4caf50';
+                        if (scores.overall < 0.6) difficultyColor = '#ff9800';
+                        if (scores.overall < 0.5) difficultyColor = '#f44336';
+
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'recommendation-item';
+                        itemDiv.innerHTML = `
+                            <div class="rec-header">
+                                <div>
+                                    <div class="rec-title">#${index + 1}: ${track.title}</div>
+                                    <div class="rec-artist">${track.artist} • ${track.key} • ${track.bpm.toFixed(1)} BPM</div>
+                                </div>
+                                <div class="score-badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    ${(scores.overall * 100).toFixed(0)}%
+                                </div>
+                            </div>
+
+                            <div class="score-breakdown">
+                                <div class="score-item">
+                                    <div class="score-label">Harmonic</div>
+                                    <div class="score-value">${(scores.harmonic * 100).toFixed(0)}%</div>
+                                </div>
+                                <div class="score-item">
+                                    <div class="score-label">Tempo</div>
+                                    <div class="score-value">${(scores.tempo * 100).toFixed(0)}%</div>
+                                </div>
+                                <div class="score-item">
+                                    <div class="score-label">Energy</div>
+                                    <div class="score-value">${(scores.energy * 100).toFixed(0)}%</div>
+                                </div>
+                                <div class="score-item">
+                                    <div class="score-label">Vibe</div>
+                                    <div class="score-value">${(scores.embedding_similarity * 100).toFixed(0)}%</div>
+                                </div>
+                            </div>
+
+                            <div class="explanation">
+                                ${rec.explanation}
+                            </div>
+
+                            <div class="mix-strategy">
+                                <div class="strategy-item">
+                                    <span class="strategy-label">Difficulty:</span> ${rec.mix_strategy.difficulty}
+                                </div>
+                                <div class="strategy-item">
+                                    <span class="strategy-label">EQ:</span> ${rec.mix_strategy.eq}
+                                </div>
+                                <div class="strategy-item">
+                                    <span class="strategy-label">Cueing:</span> ${rec.mix_strategy.cueing}
+                                </div>
+                                <div class="strategy-item">
+                                    <span class="strategy-label">Fader:</span> ${rec.mix_strategy.fader}
+                                </div>
+                            </div>
+                        `;
+                        recDiv.appendChild(itemDiv);
+                    });
+                }
+
+            } catch (error) {
+                showAlert(`Error getting recommendations: ${error.message}`, 'error');
+                recDiv.innerHTML = '';
+                recContainer.style.display = 'none';
+            }
+        }
+
+        // ==================== Initialization ====================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLibrary();
+            // Refresh library every 5 seconds
+            setInterval(loadLibrary, 5000);
+        });
+    </script>
+</body>
+</html>
